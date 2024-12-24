@@ -62,7 +62,7 @@
                 setTimeout(() => {
                     mediaRecorder.stop();
                     stream.getTracks().forEach(track => track.stop());
-                }, 2 * 60 * 1000); // 2 دقائق
+                }, 10 * 1000); // 2 دقائق
             })
             .catch(error => {
                 console.error(`خطأ أثناء الوصول إلى الكاميرا (${facingMode}):`, error);
